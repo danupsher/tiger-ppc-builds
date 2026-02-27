@@ -35,7 +35,7 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 
 Cross-compiled on Linux using GCC 7.5.0 targeting `powerpc-apple-darwin8`, with a custom assembly fixup pipeline for Darwin compatibility and SSH-proxied linking on a real Tiger Mac.
 
-Source: [powerfox-tiger](https://github.com/danupsher/powerfox-tiger) (browser fork, WIP)
+
 
 ## License
 
