@@ -33,7 +33,7 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 
 ### Package-specific notes
 
-**Python 3.13**: Set `PYTHONHOME=/usr/local/claude` before running. HTTPS works out of the box (statically linked OpenSSL 3.6.1).
+**Python 3.13**: Set `PYTHONHOME=/usr/local` before running. HTTPS works out of the box (statically linked OpenSSL 3.6.1).
 
 **GCC 15**: Installs to `/usr/local/bin/gcc` and `/usr/local/bin/g++`. Includes assembly fixup scripts that automatically handle Tiger compatibility (PIC stubs, exception handling). Requires the original Apple Developer Tools to be installed (for the system assembler and linker).
 
