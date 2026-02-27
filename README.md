@@ -9,9 +9,9 @@ These are statically linked binaries cross-compiled from Linux, targeting `power
 | Package | Version | Notes |
 |---------|---------|-------|
 | GCC | 15.2.0 | C/C++ compiler with C++23 support |
-| Python | 3.13.12 | Full Python 3.13 with pip |
-| OpenSSL | 3.6.1 | Static libraries + headers |
-| curl | 8.x | HTTPS support via OpenSSL |
+| Python | 3.13.12 | Full Python 3.13 with stdlib |
+| OpenSSL | 3.6.1 | Static libraries + headers (not a standalone tool) |
+| curl | 8.12.1 | HTTPS support via OpenSSL 3.6.1 |
 | git | 2.48.1 | Full git with HTTPS clone support |
 | ffmpeg | 7.1.1 | ffmpeg + ffprobe |
 
