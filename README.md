@@ -65,3 +65,19 @@ Cross-compiled on Linux (Ubuntu 24.04, i5-9400) using GCC 7.5.0 targeting `power
 ## License
 
 Each package retains its original license (GPL, MIT, etc). This repo only distributes pre-compiled binaries.
+
+## Cross-Compiler Toolchain
+
+Want to compile your own software for Tiger PPC? The cross-compiler toolchain
+is available as a separate download:
+
+**[Download PPC Tiger Cross-Compiler (GCC 7.5.0)](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0)** — 87 MB
+
+```bash
+tar xf ppc-tiger-xcompiler.tar.gz
+export PATH="$PWD/toolchain/bin:$PATH"
+ppc-tiger-gcc -O2 hello.c -o hello
+```
+
+Runs on x86_64 Linux. Includes GCC 7.5.0, Apple cctools, MacOSX10.4u SDK,
+and the assembly fixup pipeline. See the included README for details.
