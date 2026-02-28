@@ -76,8 +76,13 @@ is available as a separate download:
 ```bash
 tar xf ppc-tiger-xcompiler.tar.gz
 export PATH="$PWD/toolchain/bin:$PATH"
+export PPC_TIGER_HOST="user@your-tiger-mac"
+
 ppc-tiger-gcc -O2 hello.c -o hello
 ```
 
-Runs on x86_64 Linux. Includes GCC 7.5.0, Apple cctools, MacOSX10.4u SDK,
-and the assembly fixup pipeline. See the included README for details.
+Compiles and assembles locally on x86_64 Linux. Linking runs via SSH on your
+Tiger Mac (requires passwordless SSH and ld64 from Apple Developer Tools).
+Always use `ppc-tiger-gcc` / `ppc-tiger-g++` — not `powerpc-apple-darwin8-gcc` directly.
+
+See the [release page](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0) for full setup instructions.
