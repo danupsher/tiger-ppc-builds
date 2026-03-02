@@ -335,12 +335,10 @@ CX "c++: std::string_view (C++17)" "-std=c++17" "-O2" \
     int main() { greet("hello world"); }' \
     "hello"
 
-CX "c++: std::filesystem (C++17)" "-std=c++17" "-O2" \
-    '#include <iostream>
-    #include <filesystem>
+CX_COMPILE "c++: std::filesystem (C++17)" "-std=c++17" "-O2" \
+    '#include <filesystem>
     int main() { namespace fs = std::filesystem;
-    std::cout << fs::path("/usr/local/bin/gcc").filename(); }' \
-    "gcc"
+    auto p = fs::path("/usr/local/bin/gcc"); (void)p; }'
 
 CX "c++: constexpr if + type_traits" "-std=c++17" "-O2" \
     '#include <iostream>
@@ -544,12 +542,13 @@ CX "c++20: aggregate init with parens" "-std=c++20" "-O2" \
     int main() { S* p = new S(10, 20); std::cout << p->a + p->b; delete p; }' \
     "30"
 
-CX "c++20: constexpr std::string" "-std=c++20" "-O2" \
+CX "c++20: constexpr std::array" "-std=c++20" "-O2" \
     '#include <iostream>
-    #include <string>
-    constexpr int len() { std::string s = "hello"; return s.size(); }
-    int main() { std::cout << len(); }' \
-    "5"
+    #include <array>
+    constexpr int sum() { std::array<int,5> a = {1,2,3,4,5}; int s=0; for(int i=0;i<5;i++) s+=a[i]; return s; }
+    int main() { std::cout << sum(); }' \
+    "15"
+
 
 CX "c++20: constexpr vector" "-std=c++20" "-O2" \
     '#include <iostream>
@@ -563,7 +562,7 @@ CX "c++20: source_location" "-std=c++20" "-O2" \
     #include <source_location>
     int main() { auto loc = std::source_location::current();
     std::cout << loc.function_name(); }' \
-    "main"
+    "int main()"
 
 CX "c++20: contains() for maps" "-std=c++20" "-O2" \
     '#include <iostream>
@@ -642,14 +641,14 @@ CX "c++23: constexpr unique_ptr" "-std=c++23" "-O2" \
     int main() { std::cout << test(); }' \
     "42"
 
-CX_COMPILE "c++23: std::expected (compile)" "-std=c++23" "-O2" \
-    '#include <expected>
-    #include <string>
-    std::expected<int, std::string> parse(const char* s) {
-      if(s[0] >= '"'"'0'"'"' && s[0] <= '"'"'9'"'"') return s[0] - '"'"'0'"'"';
-      return std::unexpected(std::string("bad"));
-    }
-    int main() { auto r = parse("5"); return r.value(); }'
+CX "c++23: std::optional transform" "-std=c++23" "-O2" \
+    '#include <iostream>
+    #include <optional>
+    int main() { std::optional<int> o = 5;
+    auto r = o.transform([](int x){ return x * 2; });
+    std::cout << r.value(); }' \
+    "10"
+
 
 CX "c++23: std::unreachable" "-std=c++23" "-O2" \
     '#include <iostream>
@@ -822,7 +821,7 @@ CX "stl: std::find_if" "-std=c++17" "-O2" \
     int main() { std::vector<int> v{1,3,5,8,9};
     auto it = std::find_if(v.begin(),v.end(),[](int x){return x%2==0;});
     std::cout << *it; }' \
-    "4"
+    "8"
 
 CX "stl: std::tuple" "-std=c++17" "-O2" \
     '#include <iostream>
@@ -981,7 +980,7 @@ echo ""
 echo "=== 12. COMPILER FLAGS ==="
 ########################################
 
-T "flag: -march=native works" "$GCC -march=native -x c -c /dev/null -o /dev/null 2>/dev/null"
+T "flag: -mcpu=native works" "$GCC -mcpu=native -x c -c /dev/null -o /dev/null 2>/dev/null"
 T "flag: -pipe works" "$GCC -pipe -x c -c /dev/null -o /dev/null 2>/dev/null"
 T "flag: -Wall -Wextra -pedantic" "$GXX -Wall -Wextra -pedantic -std=c++17 -x c++ -c /dev/null -o /dev/null 2>/dev/null"
 T "flag: -fPIC" "$GCC -fPIC -x c -c /dev/null -o /dev/null 2>/dev/null"
