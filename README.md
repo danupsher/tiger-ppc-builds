@@ -93,7 +93,7 @@ ppc-tiger-gcc -O2 hello.c -o hello
 
 Compiles and assembles locally on x86_64 Linux. Linking runs via SSH on your
 Tiger Mac (requires passwordless SSH and ld64 from Apple Developer Tools).
-Default target is G3 (`-mcpu=G3`) — binaries run on any PowerPC Mac.
+Default target is G3 (`-mcpu=G3`) — binaries run on any PowerPC Mac. Override with `-mcpu=970` for G5-optimized builds.
 Always use `ppc-tiger-gcc` / `ppc-tiger-g++` — not `powerpc-apple-darwin8-gcc` directly.
 
 Includes `libgcc_supplement.a` and `libtiger_runtime.a` for Tiger compatibility
