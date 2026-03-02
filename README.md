@@ -6,20 +6,24 @@ These are statically linked binaries cross-compiled from Linux, targeting `power
 
 ## Available Packages
 
-| Package | Version | G5 (ppc970) | G3/G4 (ppc750) | Notes |
-|---------|---------|:-----------:|:--------------:|-------|
-| GCC | 15.2.0 | Yes | No | C/C++ compiler with C++23 support. G5-only binary, but can target G3 with `-mcpu=G3`. |
-| Python | 3.13.12 | Yes | Yes | Full stdlib including sqlite3, ssl, ctypes, readline, lzma, bz2 |
-| OpenSSL | 3.6.1 | Yes | Yes | Static libraries + headers for building other software |
-| curl | 8.12.1 | Yes | Yes | HTTPS support via OpenSSL 3.6.1 (TLS 1.2/1.3) |
-| git | 2.48.1 | Yes | Yes | Full git with HTTPS clone support |
-| ffmpeg | 7.1.1 | Yes | Yes | ffmpeg + ffprobe (AAC, FLAC, H.264, and more) |
+| Package | Version | GCC 15 / ld64 | GCC 7.5 / G5 | GCC 7.5 / G3 | Notes |
+|---------|---------|:-------------:|:------------:|:------------:|-------|
+| GCC | 15.2.0 | — | Yes | No | C/C++ compiler with C++23. G5-only (can target G3 with `-mcpu=G3`). |
+| Python | 3.13.12 | **Yes** | Yes | Yes | Full stdlib: sqlite3, ssl, ctypes, readline, lzma, bz2 |
+| OpenSSL | 3.6.1 | **Yes** | Yes | Yes | Static libraries + headers |
+| curl | 8.12.1 | **Yes** | Yes | Yes | HTTPS via OpenSSL 3.6.1 (TLS 1.2/1.3) |
+| git | 2.48.1 | **Yes** | Yes | Yes | Full git with HTTPS clone support |
+| ffmpeg | 7.1.1 | **Yes** | Yes | Yes | ffmpeg + ffprobe |
+
+### Which release should I download?
+
+- **GCC 15 / ld64** (recommended): Latest builds compiled with GCC 15.2.0 using the fully local ld64 pipeline. Better optimized code, C++17/20/23 standards compliance. G3/G4/G5 compatible.
+- **GCC 7.5 / G3**: Compiled with GCC 7.5.0. G3/G4/G5 compatible.
+- **GCC 7.5 / G5**: Compiled with GCC 7.5.0. G5 only.
 
 ## Compatibility
 
-**G5 builds** (ppc970): Require a PowerPC G5 processor. Use the standard release tarballs.
-
-**G3 builds** (ppc750): Run on any PowerPC Mac (G3, G4, or G5). Use the `-g3` release tarballs. GCC 15 is G5-only because its cc1plus compiler miscompiles itself when built for non-G5 targets, but it can still produce G3 binaries via `-mcpu=G3`.
+All GCC 15 / ld64 builds and GCC 7.5 / G3 builds run on **any PowerPC Mac** (G3, G4, or G5). GCC 7.5 / G5 builds require a G5 processor.
 
 **OS**: Mac OS X 10.4.x Tiger (any point release).
 
@@ -35,51 +39,47 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 
 ### Package-specific notes
 
-**Python 3.13**: Set `PYTHONHOME=/usr/local` before running. HTTPS works out of the box (statically linked OpenSSL 3.6.1).
+**Python 3.13**: Set `PYTHONHOME=/usr/local` before running.
 
-**GCC 15**: Installs to `/usr/local/bin/gcc` and `/usr/local/bin/g++`. Includes assembly fixup scripts that automatically handle Tiger compatibility (PIC stubs for `bl` and `b` tail calls, exception handling, debug output cleanup). Requires the original Apple Developer Tools to be installed (for the system assembler and linker). **Important**: `/usr/bin/ld` must be the original cctools ld, not ld64 — see `gcc15-fix/README.md` for details.
+**GCC 15**: Installs to `/usr/local/bin/gcc` and `/usr/local/bin/g++`. Includes assembly fixup scripts for Tiger compatibility. Requires original Apple Developer Tools (system assembler and linker). **Important**: `/usr/bin/ld` must be the original cctools ld, not ld64 — see `gcc15-fix/README.md`.
 
-**curl**: CA certificate bundle included at `/usr/local/etc/ssl/cert.pem`.
+**curl**: CA certificate bundle at `/usr/local/etc/ssl/cert.pem`.
 
 **git**: Set `GIT_EXEC_PATH=/usr/local/libexec/git-core` and `SSL_CERT_FILE=/usr/local/etc/ssl/cert.pem`.
 
 ## Test Results
 
 All packages verified on a real iMac G5 (PowerMac8,2, PPC G5 2GHz, 1GB RAM, Tiger 10.4.11).
-309 total tests, all passing:
+**309 tests, all passing** (86 seconds):
 
 | Package | Tests | Count | Result |
 |---------|-------|:-----:|--------|
-| GCC 15 | C/C++ compile+run, STL, exceptions, templates, multi-file, optimization levels (-O0 to -O3/-Os), static archives, `-mcpu=G3` targeting | 49 | All pass |
-| Python 3.13 | core language, 50+ stdlib modules, file I/O, subprocess, threading, sqlite3, ctypes, zlib/bz2/lzma, ssl/TLS, HTTPS fetch, data formats | 105 | All pass |
-| curl 8.12.1 | HTTP/HTTPS GET/POST/PUT/DELETE/HEAD, custom headers, auth, redirects, file download, timeouts, TLS verification | 29 | All pass |
-| git 2.48.1 | init, add, commit, log, branch, checkout, merge, tag, stash, reset, cherry-pick, blame, archive, HTTPS clone | 58 | All pass |
-| ffmpeg 7.1.1 | audio gen (sine/silence/noise), format conversion (WAV/FLAC/AAC/PCM), filters (volume/speed/fade/resample), ffprobe (JSON/format/streams), video gen, container ops, metadata | 44 | All pass |
-| OpenSSL 3.6.1 | Static library — tested indirectly via Python ssl module and curl HTTPS (TLS 1.2/1.3, cipher suites, certificate verification) | 24 | All pass |
+| Python 3.13 | Core language, 48 stdlib modules, file I/O, subprocess, threading, sqlite3, compression, ssl/HTTPS | 105 | All pass |
+| git 2.48.1 | init/add/commit/log, branch/merge/tag/stash/reset, cherry-pick/blame/archive, format-patch/apply/am, grep, HTTPS clone | 58 | All pass |
+| GCC 15 | C/C++ compile+run, STL, exceptions (6 types), C++17, optimization levels, static archives, -mcpu=G3 | 50 | All pass |
+| ffmpeg 7.1.1 | Audio gen, format conversion (WAV/FLAC/AAC/PCM/AIFF/AU), filters, ffprobe, video gen, containers, metadata | 46 | All pass |
+| curl 8.12.1 | HTTP/HTTPS verbs, headers, auth, redirects, downloads, TLS verification, file:// protocol | 29 | All pass |
+| OpenSSL 3.6.1 | Tested via Python ssl and curl HTTPS: contexts, ciphers, TLS 1.2, cert verification, HTTPS connections | 24 | All pass |
 
-G3 builds tested with the same suite — all packages work identically on G3/G4/G5.
-
+Test suite: [`run_309_tests.sh`](https://github.com/danupsher/tiger-ppc-builds/blob/main/run_309_tests.sh) — saved and reusable.
 
 ## How These Were Built
 
-Cross-compiled on Linux (Ubuntu 24.04, i5-9400) using GCC 7.5.0 targeting `powerpc-apple-darwin8`, with:
+### GCC 15 / ld64 builds (recommended)
+Cross-compiled on Linux using a **fully self-contained pipeline** — no Mac needed:
+- **GCC 15.2.0** cc1/cc1plus (native x86_64 ELF) for compilation
+- **ld64-97.17** (Apple's linker, built for Linux) for linking
+- cctools assembler for Mach-O object files
+- fix_exc_ld64.py + ppc-darwin-fixup.py for assembly post-processing
+- Apple 10.4u SDK for headers and frameworks
+- `-mcpu=G3` targeting — runs on any PPC Mac
 
-- Apple's 10.4 universal SDK for headers and frameworks
-- cctools (assembler, ar, ranlib, strip) for Mach-O object file handling
-- Custom assembly fixup pipeline (`ppc-darwin-fixup.py`) for Darwin PPC compatibility
-- SSH-proxied linking on a real Tiger Mac for final binary linking
-- GCC 15 includes additional on-target fixup scripts for exception handling and PIC stub generation
-
-G3 builds use `-mcpu=G3` and produce ppc750 (or generic ppc) Mach-O binaries that run on any PowerPC Mac.
-
-## License
-
-Each package retains its original license (GPL, MIT, etc). This repo only distributes pre-compiled binaries.
+### GCC 7.5 builds (legacy)
+Cross-compiled on Linux using GCC 7.5.0 with SSH-proxied linking on a real Tiger Mac.
 
 ## Cross-Compiler Toolchain
 
-Want to compile your own software for Tiger PPC? The cross-compiler toolchain
-is available as a separate download:
+Want to compile your own software for Tiger PPC?
 
 **[Download PPC Tiger Cross-Compiler (GCC 7.5.0)](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0)** — 86 MB
 
@@ -87,14 +87,20 @@ is available as a separate download:
 tar xf ppc-tiger-xcompiler.tar.gz
 export PATH="$PWD/toolchain/bin:$PATH"
 export PPC_TIGER_HOST="user@your-tiger-mac"
-
 ppc-tiger-gcc -O2 hello.c -o hello
 ```
 
-Compiles and assembles locally on x86_64 Linux. Linking runs via SSH on your
-Tiger Mac (requires passwordless SSH and ld64 from Apple Developer Tools).
-Default target is G3 (`-mcpu=G3`) — binaries run on any PowerPC Mac. Override with `-mcpu=970` for G5-optimized builds.
-Always use `ppc-tiger-gcc` / `ppc-tiger-g++` — not `powerpc-apple-darwin8-gcc` directly.
+Compiles locally on x86_64 Linux, links via SSH on your Tiger Mac. Default target is G3.
 
-Includes `libgcc_supplement.a` and `libtiger_runtime.a` for Tiger compatibility
-(auto-linked). See the [release page](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0) for full setup instructions.
+## Standalone Cross-Compiler (Coming Soon)
+
+A fully self-contained GCC 15 cross-compilation toolchain — runs entirely on Linux:
+- GCC 15 cc1/cc1plus + ld64-97.17 + cctools as
+- Assembly fixup scripts, runtime libraries, 10.4u SDK
+- Wrapper scripts: `ppc-ld64-gcc`, `ppc-ld64-g++`
+
+No Mac needed. No SSH. Unpack and cross-compile modern C/C++ for Tiger PPC.
+
+## License
+
+Each package retains its original license (GPL, MIT, etc). This repo only distributes pre-compiled binaries.
