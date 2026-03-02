@@ -55,7 +55,7 @@ All packages verified on a real iMac G5 (PowerMac8,2, PPC G5 2GHz, 1GB RAM, Tige
 | curl 8.12.1 | HTTP/HTTPS GET/POST/PUT/DELETE/HEAD, custom headers, auth, redirects, file download, timeouts, TLS verification | 29 | All pass |
 | git 2.48.1 | init, add, commit, log, branch, checkout, merge, tag, stash, reset, cherry-pick, blame, archive, HTTPS clone | 58 | All pass |
 | ffmpeg 7.1.1 | audio gen (sine/silence/noise), format conversion (WAV/FLAC/AAC/PCM), filters (volume/speed/fade/resample), ffprobe (JSON/format/streams), video gen, container ops, metadata | 44 | All pass |
-| OpenSSL 3.6.1 | TLS 1.2/1.3, SSL contexts, cipher suites, hashlib (SHA-256/384/512/SHA3/BLAKE2/MD5), HTTPS via Python and curl, certificate verification | 24 | All pass |
+| OpenSSL 3.6.1 | Static library — tested indirectly via Python ssl module and curl HTTPS (TLS 1.2/1.3, cipher suites, certificate verification) | 24 | All pass |
 
 G3 builds tested with the same suite — all packages work identically on G3/G4/G5.
 
