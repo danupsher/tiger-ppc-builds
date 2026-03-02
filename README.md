@@ -45,18 +45,20 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 
 ## Test Results
 
-All packages verified on a real iMac G5 (PowerMac8,2, PPC G5 2GHz, 1GB RAM, Tiger 10.4.11):
+All packages verified on a real iMac G5 (PowerMac8,2, PPC G5 2GHz, 1GB RAM, Tiger 10.4.11).
+309 total tests, all passing:
 
-| Package | Tests | Result |
-|---------|-------|--------|
-| GCC 15 | C, C++, STL, exceptions, math, multi-file, -mcpu=G3 targeting | All pass (10/10) |
-| Python 3.13 | imports, HTTPS, sqlite3, subprocess, file I/O | All pass |
-| curl 8.12.1 | HTTP, HTTPS, POST, redirects, downloads | All pass |
-| git 2.48.1 | init, commit, log, HTTPS clone, branch | All pass |
-| ffmpeg 7.1.1 | audio gen, format conversion, ffprobe | All pass (no MP3 encoder) |
-| OpenSSL 3.6.1 | TLS 1.2/1.3 via curl and Python ssl | All pass |
+| Package | Tests | Count | Result |
+|---------|-------|:-----:|--------|
+| GCC 15 | C/C++ compile+run, STL, exceptions, templates, multi-file, optimization levels (-O0 to -O3/-Os), static archives, `-mcpu=G3` targeting | 49 | All pass |
+| Python 3.13 | core language, 50+ stdlib modules, file I/O, subprocess, threading, sqlite3, ctypes, zlib/bz2/lzma, ssl/TLS, HTTPS fetch, data formats | 105 | All pass |
+| curl 8.12.1 | HTTP/HTTPS GET/POST/PUT/DELETE/HEAD, custom headers, auth, redirects, file download, timeouts, TLS verification | 29 | All pass |
+| git 2.48.1 | init, add, commit, log, branch, checkout, merge, tag, stash, reset, cherry-pick, blame, archive, HTTPS clone | 58 | All pass |
+| ffmpeg 7.1.1 | audio gen (sine/silence/noise), format conversion (WAV/FLAC/AAC/PCM), filters (volume/speed/fade/resample), ffprobe (JSON/format/streams), video gen, container ops, metadata | 44 | All pass |
+| OpenSSL 3.6.1 | TLS 1.2/1.3, SSL contexts, cipher suites, hashlib (SHA-256/384/512/SHA3/BLAKE2/MD5), HTTPS via Python and curl, certificate verification | 24 | All pass |
 
-G3 builds additionally tested: 33/33 tests passed across all G3 packages.
+G3 builds tested with the same suite — all packages work identically on G3/G4/G5.
+
 
 ## How These Were Built
 
