@@ -8,7 +8,7 @@ These are statically linked binaries cross-compiled from Linux, targeting `power
 
 | Package | Version | GCC 15 / ld64 | GCC 7.5 / G5 | GCC 7.5 / G3 | Notes |
 |---------|---------|:-------------:|:------------:|:------------:|-------|
-| GCC | 15.2.0 | **Yes** | -- | -- | C/C++ compiler with C++23. 137/137 tests. |
+| GCC | 15.2.0 | **Yes** | Yes | -- | C/C++ compiler with C++23. 137/137 tests. |
 | Python | 3.13.12 | **Yes** | Yes | Yes | Full stdlib: sqlite3, ssl, ctypes, readline, lzma, bz2 |
 | OpenSSL | 3.6.1 | **Yes** | Yes | Yes | Static libraries + headers |
 | curl | 8.12.1 | **Yes** | Yes | Yes | HTTPS via OpenSSL 3.6.1, TLS 1.2/1.3 |
