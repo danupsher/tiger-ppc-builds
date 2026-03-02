@@ -81,7 +81,7 @@ Each package retains its original license (GPL, MIT, etc). This repo only distri
 Want to compile your own software for Tiger PPC? The cross-compiler toolchain
 is available as a separate download:
 
-**[Download PPC Tiger Cross-Compiler (GCC 7.5.0)](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0)** — 87 MB
+**[Download PPC Tiger Cross-Compiler (GCC 7.5.0)](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0)** — 86 MB
 
 ```bash
 tar xf ppc-tiger-xcompiler.tar.gz
@@ -93,6 +93,8 @@ ppc-tiger-gcc -O2 hello.c -o hello
 
 Compiles and assembles locally on x86_64 Linux. Linking runs via SSH on your
 Tiger Mac (requires passwordless SSH and ld64 from Apple Developer Tools).
+Default target is G3 (`-mcpu=G3`) — binaries run on any PowerPC Mac.
 Always use `ppc-tiger-gcc` / `ppc-tiger-g++` — not `powerpc-apple-darwin8-gcc` directly.
 
-See the [release page](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0) for full setup instructions.
+Includes `libgcc_supplement.a` and `libtiger_runtime.a` for Tiger compatibility
+(auto-linked). See the [release page](https://github.com/danupsher/tiger-ppc-builds/releases/tag/cross-compiler-1.0) for full setup instructions.
