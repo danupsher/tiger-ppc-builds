@@ -8,7 +8,7 @@ These are statically linked binaries cross-compiled from Linux, targeting `power
 
 | Package | Version | GCC 15 / ld64 | GCC 7.5 / G5 | GCC 7.5 / G3 | Notes |
 |---------|---------|:-------------:|:------------:|:------------:|-------|
-| GCC | 15.2.0 | -- | Yes | **Yes** | C/C++ compiler with C++23. G3/G4/G5 compatible. |
+| GCC | 15.2.0 | **Yes** | Yes | -- | C/C++ compiler with C++23. 137/137 tests. |
 | Python | 3.13.12 | **Yes** | Yes | Yes | Full stdlib: sqlite3, ssl, ctypes, readline, lzma, bz2 |
 | OpenSSL | 3.6.1 | **Yes** | Yes | Yes | Static libraries + headers |
 | curl | 8.12.1 | **Yes** | Yes | Yes | HTTPS via OpenSSL 3.6.1, TLS 1.2/1.3 |
@@ -54,14 +54,14 @@ All packages verified on a real iMac G5 -- PowerMac8,2, PPC G5 2GHz, 1GB RAM, Ti
 
 | Package | Tests | Count | Result |
 |---------|-------|:-----:|--------|
+| GCC 15 | C/C++ compile+run, STL, exceptions, C++17/20/23, optimization, linking, patterns | 137 | All pass |
 | Python 3.13 | Core language, 48 stdlib modules, file I/O, subprocess, threading, sqlite3, compression, ssl/HTTPS | 105 | All pass |
 | git 2.48.1 | init/add/commit/log, branch/merge/tag/stash/reset, cherry-pick/blame/archive, format-patch/apply/am, grep, HTTPS clone | 58 | All pass |
-| GCC 15 | C/C++ compile+run, STL, exceptions, C++17/20/23, optimization, linking, patterns | 137 | All pass |
 | ffmpeg 7.1.1 | Audio gen, format conversion, filters, ffprobe, video gen, containers, metadata | 46 | All pass |
 | curl 8.12.1 | HTTP/HTTPS verbs, headers, auth, redirects, downloads, TLS verification, file:// protocol | 29 | All pass |
 | OpenSSL 3.6.1 | Tested via Python ssl and curl HTTPS: contexts, ciphers, TLS 1.2, cert verification | 24 | All pass |
 
-Test suites: [`run_309_tests.sh`](run_309_tests.sh) (309 package tests), [`test_gcc15_comprehensive.sh`](test_gcc15_comprehensive.sh) (137 GCC compiler tests)
+Test suites: [`run_309_tests.sh`](run_309_tests.sh) (package integration), [`test_gcc15_comprehensive.sh`](test_gcc15_comprehensive.sh) (137 GCC compiler tests)
 
 ## How These Were Built
 
@@ -73,6 +73,8 @@ Cross-compiled on Linux using a **fully self-contained pipeline** -- no Mac need
 - fix_exc_ld64.py + ppc-darwin-fixup.py for assembly post-processing
 - Apple 10.4u SDK for headers and frameworks
 - `-mcpu=G3` targeting -- runs on any PPC Mac
+
+The native GCC 15 compiler itself (`gcc-15.2.0-g3`) was also built with this pipeline -- GCC 15 compiling GCC 15 source into a PPC binary.
 
 ### GCC 7.5 builds -- legacy
 Cross-compiled on Linux using GCC 7.5.0 with SSH-proxied linking on a real Tiger Mac.
