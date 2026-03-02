@@ -1,25 +1,27 @@
 # Tiger PPC Builds
 
-Pre-compiled modern software for **Mac OS X 10.4 Tiger** on **PowerPC G5** (PPC970).
+Pre-compiled modern software for **Mac OS X 10.4 Tiger** on **PowerPC**.
 
 These are statically linked binaries cross-compiled from Linux, targeting `powerpc-apple-darwin8` with the 10.4 universal SDK. Download, copy to your Tiger Mac, and run.
 
 ## Available Packages
 
-| Package | Version | Notes |
-|---------|---------|-------|
-| GCC | 15.2.0 | C/C++ compiler with C++23 support. Full exception handling. |
-| Python | 3.13.12 | Full stdlib including sqlite3, ssl, ctypes, readline, lzma, bz2 |
-| OpenSSL | 3.6.1 | Static libraries + headers for building other software |
-| curl | 8.12.1 | HTTPS support via OpenSSL 3.6.1 (TLS 1.2/1.3) |
-| git | 2.48.1 | Full git with HTTPS clone support |
-| ffmpeg | 7.1.1 | ffmpeg + ffprobe (AAC, FLAC, H.264, and more) |
+| Package | Version | G5 (ppc970) | G3/G4 (ppc750) | Notes |
+|---------|---------|:-----------:|:--------------:|-------|
+| GCC | 15.2.0 | Yes | No | C/C++ compiler with C++23 support. G5-only binary, but can target G3 with `-mcpu=G3`. |
+| Python | 3.13.12 | Yes | Yes | Full stdlib including sqlite3, ssl, ctypes, readline, lzma, bz2 |
+| OpenSSL | 3.6.1 | Yes | Yes | Static libraries + headers for building other software |
+| curl | 8.12.1 | Yes | Yes | HTTPS support via OpenSSL 3.6.1 (TLS 1.2/1.3) |
+| git | 2.48.1 | Yes | Yes | Full git with HTTPS clone support |
+| ffmpeg | 7.1.1 | Yes | Yes | ffmpeg + ffprobe (AAC, FLAC, H.264, and more) |
 
 ## Compatibility
 
-- **CPU**: PowerPC G5 (PPC970) — compiled with `-mcpu=970`
-- **OS**: Mac OS X 10.4.x Tiger (any point release)
-- **NOT compatible** with G3 or G4 processors (uses G5-specific instructions)
+**G5 builds** (ppc970): Require a PowerPC G5 processor. Use the standard release tarballs.
+
+**G3 builds** (ppc750): Run on any PowerPC Mac (G3, G4, or G5). Use the `-g3` release tarballs. GCC 15 is G5-only because its cc1plus compiler miscompiles itself when built for non-G5 targets, but it can still produce G3 binaries via `-mcpu=G3`.
+
+**OS**: Mac OS X 10.4.x Tiger (any point release).
 
 ## Installation
 
@@ -35,9 +37,11 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 
 **Python 3.13**: Set `PYTHONHOME=/usr/local` before running. HTTPS works out of the box (statically linked OpenSSL 3.6.1).
 
-**GCC 15**: Installs to `/usr/local/bin/gcc` and `/usr/local/bin/g++`. Includes assembly fixup scripts that automatically handle Tiger compatibility (PIC stubs, exception handling). Requires the original Apple Developer Tools to be installed (for the system assembler and linker).
+**GCC 15**: Installs to `/usr/local/bin/gcc` and `/usr/local/bin/g++`. Includes assembly fixup scripts that automatically handle Tiger compatibility (PIC stubs for `bl` and `b` tail calls, exception handling, debug output cleanup). Requires the original Apple Developer Tools to be installed (for the system assembler and linker). **Important**: `/usr/bin/ld` must be the original cctools ld, not ld64 — see `gcc15-fix/README.md` for details.
 
 **curl**: CA certificate bundle included at `/usr/local/etc/ssl/cert.pem`.
+
+**git**: Set `GIT_EXEC_PATH=/usr/local/libexec/git-core` and `SSL_CERT_FILE=/usr/local/etc/ssl/cert.pem`.
 
 ## Test Results
 
@@ -45,12 +49,14 @@ All packages verified on a real iMac G5 (PowerMac8,2, PPC G5 2GHz, 1GB RAM, Tige
 
 | Package | Tests | Result |
 |---------|-------|--------|
-| GCC 15 | C, C++, STL, exceptions, math, multi-file | All pass |
+| GCC 15 | C, C++, STL, exceptions, math, multi-file, -mcpu=G3 targeting | All pass (10/10) |
 | Python 3.13 | imports, HTTPS, sqlite3, subprocess, file I/O | All pass |
 | curl 8.12.1 | HTTP, HTTPS, POST, redirects, downloads | All pass |
 | git 2.48.1 | init, commit, log, HTTPS clone, branch | All pass |
 | ffmpeg 7.1.1 | audio gen, format conversion, ffprobe | All pass (no MP3 encoder) |
 | OpenSSL 3.6.1 | TLS 1.2/1.3 via curl and Python ssl | All pass |
+
+G3 builds additionally tested: 33/33 tests passed across all G3 packages.
 
 ## How These Were Built
 
@@ -61,6 +67,8 @@ Cross-compiled on Linux (Ubuntu 24.04, i5-9400) using GCC 7.5.0 targeting `power
 - Custom assembly fixup pipeline (`ppc-darwin-fixup.py`) for Darwin PPC compatibility
 - SSH-proxied linking on a real Tiger Mac for final binary linking
 - GCC 15 includes additional on-target fixup scripts for exception handling and PIC stub generation
+
+G3 builds use `-mcpu=G3` and produce ppc750 (or generic ppc) Mach-O binaries that run on any PowerPC Mac.
 
 ## License
 

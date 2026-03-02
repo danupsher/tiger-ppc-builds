@@ -9,7 +9,7 @@ Fixes:
 6. LSDA: TType encoding 0x9b -> 0x0
 7. LSDA: type table entries from pcrel indirect to absolute
 8. LSDA: section __TEXT -> __DATA
-9. Add PIC stubs for external function calls
+9. Add PIC stubs for external function calls (bl and b tail calls)
 10. Add _main.eh global if missing
 """
 import sys, re
@@ -32,7 +32,7 @@ def fix_assembly(lines):
     # First pass: find all bl targets and existing stubs
     for line in lines:
         s = line.strip()
-        m = re.match(r'bl\s+(_[\w$]+)', s)
+        m = re.match(r'b[l]?\s+(_[\w$]+)', s)
         if m and not s.startswith('.'):
             target = m.group(1)
             ext_calls.add(target)
@@ -144,8 +144,8 @@ def fix_assembly(lines):
                 fixes += 1
             continue
         
-        # Replace direct bl to external with stub call
-        m = re.match(r'(\s*bl\s+)(_[\w$]+)\s*$', line.rstrip('\n'))
+        # Replace direct bl/b to external with stub call
+        m = re.match(r'(\s*b[l]?\s+)(_[\w$]+)\s*$', line.rstrip('\n'))
         if m and m.group(2) in need_stubs:
             out.append(m.group(1) + 'L' + m.group(2) + '$stub\n')
             fixes += 1

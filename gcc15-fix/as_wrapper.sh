@@ -18,7 +18,7 @@ case "$last" in
             cleaned="/tmp/as_clean_$$.s"
             fixed="/tmp/as_fixed_$$.s"
             # Step 1: Strip corrupted tail bytes
-            tr -d '\000' < "$last" | sed -e '/\.set.*%qd/d' -e '/ms_str/d' > "$cleaned"
+            tr -d '\000' < "$last" | sed -e '/\.set.*%qd/d' -e '/ms_str/d' -e 's/^flags:.*/.text/' > "$cleaned"
             # Step 2: Apply PIC stub + exception handling fixes
             if [ -f "$FIX_EXC" ]; then
                 /usr/local/bin/python3 "$FIX_EXC" "$cleaned" "$fixed" 2>/dev/null
