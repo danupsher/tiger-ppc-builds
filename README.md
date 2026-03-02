@@ -8,7 +8,7 @@ These are statically linked binaries cross-compiled from Linux, targeting `power
 
 | Package | Version | GCC 15 / ld64 | GCC 7.5 / G5 | GCC 7.5 / G3 | Notes |
 |---------|---------|:-------------:|:------------:|:------------:|-------|
-| GCC | 15.2.0 | -- | Yes | No | C/C++ compiler with C++23. G5-only, but can target G3 with `-mcpu=G3`. |
+| GCC | 15.2.0 | -- | Yes | Yes | C/C++ compiler with C++23. G3/G4/G5 compatible. |
 | Python | 3.13.12 | **Yes** | Yes | Yes | Full stdlib: sqlite3, ssl, ctypes, readline, lzma, bz2 |
 | OpenSSL | 3.6.1 | **Yes** | Yes | Yes | Static libraries + headers |
 | curl | 8.12.1 | **Yes** | Yes | Yes | HTTPS via OpenSSL 3.6.1, TLS 1.2/1.3 |
@@ -41,7 +41,7 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 
 **Python 3.13**: Set `PYTHONHOME=/usr/local` before running.
 
-**GCC 15**: Installs to `/usr/local/bin/gcc` and `/usr/local/bin/g++`. Includes assembly fixup scripts for Tiger compatibility. Requires original Apple Developer Tools for the system assembler and linker. **Important**: `/usr/bin/ld` must be the original cctools ld, not ld64 -- see `gcc15-fix/README.md`.
+**GCC 15**: Installs to `/usr/local/bin/gcc` and `/usr/local/bin/g++`. G3/G4/G5 compatible. Includes assembly fixup scripts for Tiger compatibility. Requires original Apple Developer Tools for the system assembler and linker. **Important**: `/usr/bin/ld` must be the original cctools ld, not ld64 -- see `gcc15-fix/README.md`.
 
 **curl**: CA certificate bundle at `/usr/local/etc/ssl/cert.pem`.
 
@@ -50,13 +50,13 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 ## Test Results
 
 All packages verified on a real iMac G5 -- PowerMac8,2, PPC G5 2GHz, 1GB RAM, Tiger 10.4.11.
-**309 tests, all passing** in 86 seconds:
+**396 tests, all passing** (309 package tests + 137 GCC compiler tests):
 
 | Package | Tests | Count | Result |
 |---------|-------|:-----:|--------|
 | Python 3.13 | Core language, 48 stdlib modules, file I/O, subprocess, threading, sqlite3, compression, ssl/HTTPS | 105 | All pass |
 | git 2.48.1 | init/add/commit/log, branch/merge/tag/stash/reset, cherry-pick/blame/archive, format-patch/apply/am, grep, HTTPS clone | 58 | All pass |
-| GCC 15 | C/C++ compile+run, STL, exceptions, C++17, optimization levels, static archives, -mcpu=G3 | 50 | All pass |
+| GCC 15 | C/C++ compile+run, STL, exceptions, C++17/20/23, optimization, linking, patterns | 137 | All pass |
 | ffmpeg 7.1.1 | Audio gen, format conversion, filters, ffprobe, video gen, containers, metadata | 46 | All pass |
 | curl 8.12.1 | HTTP/HTTPS verbs, headers, auth, redirects, downloads, TLS verification, file:// protocol | 29 | All pass |
 | OpenSSL 3.6.1 | Tested via Python ssl and curl HTTPS: contexts, ciphers, TLS 1.2, cert verification | 24 | All pass |
@@ -94,7 +94,7 @@ ppc-ld64-gcc -O2 hello.c -o hello
 ppc-ld64-g++ -std=c++17 -O2 program.cpp -o program
 ```
 
-Everything runs locally on x86_64 Linux. No Mac, no SSH. Includes GCC 15 cc1/cc1plus, ld64-97.17, cctools assembler, assembly fixup scripts, runtime libraries, and the Mac OS X 10.4u SDK. Targets `-mcpu=G3` by default -- binaries run on any PPC Mac.
+Everything runs locally on x86_64 Linux. No Mac, no SSH. Includes GCC 15 cc1/cc1plus, ld64-97.17, cctools assembler, assembly fixup scripts, runtime libraries, and the Mac OS X 10.4u SDK. Targets `-mcpu=G3` by default -- binaries run on any PPC Mac. **137/137 comprehensive tests passing** (C11, C++17/20/23, exceptions, STL, optimization, real-world patterns).
 
 **Requirements**: x86_64 Linux, Python 3, ~250 MB disk space.
 
