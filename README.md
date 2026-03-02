@@ -8,7 +8,7 @@ These are statically linked binaries cross-compiled from Linux, targeting `power
 
 | Package | Version | GCC 15 / ld64 | GCC 7.5 / G5 | GCC 7.5 / G3 | Notes |
 |---------|---------|:-------------:|:------------:|:------------:|-------|
-| GCC | 15.2.0 | -- | Yes | Yes | C/C++ compiler with C++23. G3/G4/G5 compatible. |
+| GCC | 15.2.0 | -- | Yes | **Yes** | C/C++ compiler with C++23. G3/G4/G5 compatible. |
 | Python | 3.13.12 | **Yes** | Yes | Yes | Full stdlib: sqlite3, ssl, ctypes, readline, lzma, bz2 |
 | OpenSSL | 3.6.1 | **Yes** | Yes | Yes | Static libraries + headers |
 | curl | 8.12.1 | **Yes** | Yes | Yes | HTTPS via OpenSSL 3.6.1, TLS 1.2/1.3 |
@@ -50,7 +50,7 @@ Most binaries install to `/usr/local/bin`. See individual release notes for deta
 ## Test Results
 
 All packages verified on a real iMac G5 -- PowerMac8,2, PPC G5 2GHz, 1GB RAM, Tiger 10.4.11.
-**396 tests, all passing** (309 package tests + 137 GCC compiler tests):
+**All tests passing** across two test suites:
 
 | Package | Tests | Count | Result |
 |---------|-------|:-----:|--------|
@@ -61,7 +61,7 @@ All packages verified on a real iMac G5 -- PowerMac8,2, PPC G5 2GHz, 1GB RAM, Ti
 | curl 8.12.1 | HTTP/HTTPS verbs, headers, auth, redirects, downloads, TLS verification, file:// protocol | 29 | All pass |
 | OpenSSL 3.6.1 | Tested via Python ssl and curl HTTPS: contexts, ciphers, TLS 1.2, cert verification | 24 | All pass |
 
-Test suite: [`run_309_tests.sh`](run_309_tests.sh)
+Test suites: [`run_309_tests.sh`](run_309_tests.sh) (309 package tests), [`test_gcc15_comprehensive.sh`](test_gcc15_comprehensive.sh) (137 GCC compiler tests)
 
 ## How These Were Built
 
