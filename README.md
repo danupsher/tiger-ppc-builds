@@ -106,6 +106,10 @@ Everything runs locally on x86_64 Linux. No Mac, no SSH. Includes GCC 15 cc1/cc1
 
 Compiles and assembles locally on x86_64 Linux. Final linking runs via SSH on your Tiger Mac.
 
+## Also Built With This Toolchain
+
+- **[PowerFox Tiger](https://github.com/danupsher/powerfox-tiger)** — a modern web browser (UXP/Basilisk-based) ported to Tiger PPC with GPU-accelerated compositing. Cross-compiled using the GCC 15 + ld64 toolchain above.
+
 ## License
 
 Each package retains its original license. This repo only distributes pre-compiled binaries.
