@@ -1,0 +1,299 @@
+#!/bin/bash
+# ppc-ld64-gcc: Cross-compile C for Tiger PPC using fully local Linux pipeline
+# Pipeline: GCC 15 cc1 → fix_exc_ld64.py → ppc-darwin-fixup.py → cctools as → ld64
+# No SSH, no Mac needed — everything runs on Linux
+
+BASEDIR=/mnt/media/claude_cross
+CROSSDIR=$BASEDIR/build/gcc15-cross
+GCCBUILD=$BASEDIR/build/gcc-15.2.0
+GCCSRC=$BASEDIR/src/gcc-15.2.0
+LD64DIR=$BASEDIR/build/ld64-linux
+SDK=$BASEDIR/sdk_extract/macosx104/SDKs/MacOSX10.4u.sdk
+
+CC1=$CROSSDIR/gcc/cc1
+FIXEXC=$LD64DIR/fix_exc_ld64.py
+FIXUP=$BASEDIR/toolchain/bin/ppc-darwin-fixup.py
+AS=$BASEDIR/toolchain/bin/powerpc-apple-darwin8-as
+LD64=$LD64DIR/ld64
+
+GCCINC=$CROSSDIR/gcc/include
+
+DEFAULT_CFLAGS="-fPIC -fexceptions -mcpu=G3"
+
+
+# Handle query flags early
+for arg in "$@"; do
+    case "$arg" in
+        --version)
+            echo "ppc-ld64-gcc (GCC 15.2.0 cross-compiler for Tiger PPC) 15.2.0"
+            echo "Copyright (C) 2025 Free Software Foundation, Inc."
+            exit 0 ;;
+        -dumpversion)
+            echo "15.2.0"
+            exit 0 ;;
+        -dumpmachine)
+            echo "powerpc-apple-darwin8"
+            exit 0 ;;
+        --print-search-dirs|--print-file-name=*|-print-prog-name=*)
+            exit 0 ;;
+    esac
+done
+
+# Parse arguments
+COMPILE_ONLY=0
+HAS_S_FLAG=0
+HAS_E_FLAG=0
+HAS_MM_FLAG=0
+SOURCES=()
+ASM_SOURCES=()
+OBJECTS=()
+OFILE=""
+CFLAGS=()
+LDFLAGS=()
+LIBS=()
+OPT_LEVEL="-O2"
+
+SKIP_NEXT=0
+SKIP_MODE=""
+for arg in "$@"; do
+    if [ $SKIP_NEXT -eq 1 ]; then
+        SKIP_NEXT=0
+        case "$SKIP_MODE" in
+            output) OFILE="$arg" ;;
+            ignore) ;; # silently drop the argument
+            cflag) CFLAGS+=("$SAVED_FLAG" "$arg") ;;
+            ldflag) LDFLAGS+=("$SAVED_FLAG" "$arg") ;;
+            framework) LDFLAGS+=("-framework" "$arg") ;;
+        esac
+        continue
+    fi
+    case "$arg" in
+        -c) COMPILE_ONLY=1 ;;
+        -S) HAS_S_FLAG=1 ;;
+        -E) HAS_E_FLAG=1 ;;
+        -M|-MM|-MMD|-MD|-MP) HAS_MM_FLAG=1 ;;
+        -MF|-MQ|-MT) SKIP_NEXT=1; SKIP_MODE="ignore" ;;
+        -o) SKIP_NEXT=1; SKIP_MODE="output" ;;
+        -O*) OPT_LEVEL="$arg" ;;
+        -l*) LIBS+=("$arg") ;;
+        -L*) LDFLAGS+=("$arg") ;;
+        -Wl,*) LDFLAGS+=("$arg") ;;
+        -Wa,*) ;; # assembler flags — handled by our pipeline
+        -arch) SKIP_NEXT=1; SKIP_MODE="ignore" ;; # driver-only, drop with arg
+        --sysroot) SKIP_NEXT=1; SKIP_MODE="ignore" ;;
+        --sysroot=*) ;; # handled by our -isystem paths
+        -isysroot) SKIP_NEXT=1; SKIP_MODE="ignore" ;; # skip next arg too
+        -mmacosx-version-min=*|-mlong-double-64) ;; # driver-only
+        -static-libgcc) ;; # driver-only
+        -dynamic|-bundle) LDFLAGS+=("$arg") ;;
+        -dynamiclib) LDFLAGS+=("-dylib") ;;
+        -undefined|-install_name|-compatibility_version|-current_version) SKIP_NEXT=1; SKIP_MODE="ldflag"; SAVED_FLAG="$arg" ;;
+        -single_module|-flat_namespace) LDFLAGS+=("$arg") ;;
+        -nostdlib|-nodefaultlibs) LDFLAGS+=("$arg") ;;
+        -framework) SKIP_NEXT=1; SKIP_MODE="framework" ;; # pass to linker
+        -pthread) ;; # driver-only; pthreads in libSystem on Darwin
+        *.c) SOURCES+=("$arg") ;;
+        *.s|*.S) ASM_SOURCES+=("$arg") ;;
+        *.dylib|*.o|*.a) OBJECTS+=("$arg") ;;
+        *.list)
+            # GNU ld linker script from expandlibs - parse INPUT() directives
+            if [ -f "$arg" ]; then
+                while IFS= read -r _line; do
+                    _line="${_line#"${_line%%[![:space:]]*}"}"
+                    case "$_line" in
+                        INPUT\(*\))
+                            _obj="${_line#INPUT(}"
+                            _obj="${_obj%)}"
+                            _obj="${_obj#\"}"
+                            _obj="${_obj%\"}"
+                            [ -n "$_obj" ] && OBJECTS+=("$_obj")
+                            ;;
+                    esac
+                done < "$arg"
+            fi ;;
+        -x) SKIP_NEXT=1; SKIP_MODE="ignore" ;; # driver-only, drop with arg
+        -pipe) ;; # driver-only
+        -D*|-U*|-I*|-include|-std=*|-f*|-m*|-g*|-pthread) CFLAGS+=("$arg") ;;
+        -isystem) SKIP_NEXT=1; SKIP_MODE="cflag"; SAVED_FLAG="$arg" ;;
+        -W*) CFLAGS+=("$arg") ;;
+        *) CFLAGS+=("$arg") ;;
+    esac
+done
+
+# Dependency generation (-M/-MM): output minimal dep line and exit
+if [ $HAS_MM_FLAG -eq 1 ] && [ $COMPILE_ONLY -eq 0 ] && [ $HAS_E_FLAG -eq 0 ]; then
+    for src in "${SOURCES[@]}"; do
+        base=$(basename "$src" | sed 's/\.[^.]*$/.o/')
+        echo "$base: $src"
+    done
+    exit 0
+fi
+
+# Preprocess only
+if [ $HAS_E_FLAG -eq 1 ]; then
+    # Use cc1 for preprocessing
+    exec $CC1 -E -quiet \
+        -isystem $GCCINC \
+        $DEFAULT_CFLAGS "${CFLAGS[@]}" \
+        -isystem $BASEDIR/toolchain/include \
+        -isystem $SDK/usr/include \
+        $OPT_LEVEL \
+        "${SOURCES[@]}" ${OFILE:+-o "$OFILE"}
+fi
+
+compile_one() {
+    local src="$1"
+    local outobj="$2"
+
+    TMPRAW=$(mktemp /tmp/ppc_XXXXXX.s)
+    TMPFIXED=$(mktemp /tmp/ppc_XXXXXX.s)
+    TMPFINAL=$(mktemp /tmp/ppc_XXXXXX.s)
+
+    # cc1
+    $CC1 -quiet \
+        -isystem $GCCINC \
+        $DEFAULT_CFLAGS "${CFLAGS[@]}" \
+        -isystem $BASEDIR/toolchain/include \
+        -isystem $SDK/usr/include \
+        $OPT_LEVEL \
+        "$src" -o "$TMPRAW" 2>&1
+    RC=$?
+    if [ $RC -ne 0 ]; then rm -f "$TMPRAW" "$TMPFIXED" "$TMPFINAL"; return $RC; fi
+
+    # fix_exc_ld64.py
+    python3 "$FIXEXC" "$TMPRAW" "$TMPFIXED" >&2
+    RC=$?; rm -f "$TMPRAW"
+    if [ $RC -ne 0 ]; then rm -f "$TMPFIXED" "$TMPFINAL"; return $RC; fi
+
+    # ppc-darwin-fixup.py
+    python3 "$FIXUP" "$TMPFIXED" "$TMPFINAL" >&2
+    RC=$?; rm -f "$TMPFIXED"
+    if [ $RC -ne 0 ]; then rm -f "$TMPFINAL"; return $RC; fi
+
+    if [ -n "$PPC_SAVE_ASM" ]; then
+        base=$(basename "$src" | sed 's/\.[^.]*$//')
+        cp "$TMPFINAL" "/tmp/ppc_${base}.s" 2>/dev/null
+    fi
+
+    # Assemble to .s output or .o
+    if [ $HAS_S_FLAG -eq 1 ]; then
+        cp "$TMPFINAL" "$outobj"
+        rm -f "$TMPFINAL"
+    else
+        $AS -arch ppc -force_cpusubtype_ALL -o "$outobj" "$TMPFINAL" 2>&1
+        RC=$?; rm -f "$TMPFINAL"
+        if [ $RC -ne 0 ]; then return $RC; fi
+    fi
+    return 0
+}
+
+assemble_one() {
+    local src="$1"
+    local outobj="$2"
+
+    TMPFIXED=$(mktemp /tmp/ppc_XXXXXX.s)
+    TMPFINAL=$(mktemp /tmp/ppc_XXXXXX.s)
+
+    python3 "$FIXEXC" "$src" "$TMPFIXED" >&2
+    python3 "$FIXUP" "$TMPFIXED" "$TMPFINAL" >&2
+    rm -f "$TMPFIXED"
+
+    $AS -arch ppc -force_cpusubtype_ALL -o "$outobj" "$TMPFINAL" 2>&1
+    RC=$?; rm -f "$TMPFINAL"
+    return $RC
+}
+
+# Assembly-only pass-through
+if [ $HAS_S_FLAG -eq 1 ] && [ ${#SOURCES[@]} -eq 1 ]; then
+    OFILE="${OFILE:-$(basename "${SOURCES[0]%.*}").s}"
+    compile_one "${SOURCES[0]}" "$OFILE"
+    exit $?
+fi
+
+# Compile sources to objects
+CLEANUP=()
+declare -A OBJ_MAP
+
+for src in "${SOURCES[@]}"; do
+    TMPOBJ=$(mktemp /tmp/ppc_XXXXXX.o)
+    compile_one "$src" "$TMPOBJ"
+    RC=$?
+    if [ $RC -ne 0 ]; then rm -f "$TMPOBJ" "${CLEANUP[@]}"; exit $RC; fi
+    OBJ_MAP[$src]="$TMPOBJ"
+    CLEANUP+=("$TMPOBJ")
+done
+
+for src in "${ASM_SOURCES[@]}"; do
+    TMPOBJ=$(mktemp /tmp/ppc_XXXXXX.o)
+    assemble_one "$src" "$TMPOBJ"
+    RC=$?
+    if [ $RC -ne 0 ]; then rm -f "$TMPOBJ" "${CLEANUP[@]}"; exit $RC; fi
+    OBJ_MAP[$src]="$TMPOBJ"
+    CLEANUP+=("$TMPOBJ")
+done
+
+# Compile-only: copy .o to output
+if [ $COMPILE_ONLY -eq 1 ]; then
+    ALL_SRCS=("${SOURCES[@]}" "${ASM_SOURCES[@]}")
+    if [ ${#ALL_SRCS[@]} -eq 1 ]; then
+        OFILE="${OFILE:-$(basename "${ALL_SRCS[0]%.*}").o}"
+        cp "${OBJ_MAP[${ALL_SRCS[0]}]}" "$OFILE"
+    fi
+    rm -f "${CLEANUP[@]}"
+    exit 0
+fi
+
+# Link with ld64
+OFILE="${OFILE:-a.out}"
+LINK_OBJS=()
+for src in "${SOURCES[@]}" "${ASM_SOURCES[@]}"; do
+    LINK_OBJS+=("${OBJ_MAP[$src]}")
+done
+
+# Process LDFLAGS for ld64 (expand -Wl, pass everything else through)
+LD64_FLAGS=()
+for ((idx=0; idx<${#LDFLAGS[@]}; idx++)); do
+    flag="${LDFLAGS[$idx]}"
+    case "$flag" in
+        -Wl,-dead_strip) ;; 
+        -Wl,*) IFS="," read -ra WLARGS <<< "${flag#-Wl,}"; LD64_FLAGS+=("${WLARGS[@]}") ;;
+        *) LD64_FLAGS+=("$flag") ;;
+    esac
+done
+
+# Detect bundle mode (no crt1, no default -dynamic)
+IS_BUNDLE=0
+IS_DYLIB=0
+for f in "${LD64_FLAGS[@]}"; do [ "$f" = "-bundle" ] && IS_BUNDLE=1; [ "$f" = "-dylib" ] && IS_DYLIB=1; done
+
+if [ $IS_BUNDLE -eq 1 ]; then
+    $LD64 -syslibroot $SDK/ -search_paths_first -S -arch ppc -macosx_version_min 10.4 \
+        -read_only_relocs suppress \
+        -o "$OFILE" -lbundle1.o -undefined dynamic_lookup \
+        -L$LD64DIR "${LD64_FLAGS[@]}" \
+        "${LINK_OBJS[@]}" "${OBJECTS[@]}" \
+        "${LIBS[@]}" \
+        $LD64DIR/libgcc.a \
+        $LD64DIR/libtiger_runtime.a \
+        -lSystem $LD64DIR/libef_ppc.a 2>&1
+elif [ $IS_DYLIB -eq 1 ]; then
+    $LD64 -syslibroot $SDK/ -search_paths_first -S -arch ppc -macosx_version_min 10.4 \
+        -o "$OFILE" -ldylib1.o -read_only_relocs suppress -undefined dynamic_lookup \
+        -L$LD64DIR "${LD64_FLAGS[@]}" \
+        "${LINK_OBJS[@]}" "${OBJECTS[@]}" \
+        "${LIBS[@]}" \
+        $LD64DIR/emutls_stubs.o $LD64DIR/libemutls_w.a $LD64DIR/libstdc++.a $LD64DIR/libgcc.a $LD64DIR/libtiger_runtime.a $LD64DIR/libef_ppc.a -lSystem 2>&1
+else
+    $LD64 -syslibroot $SDK/ -search_paths_first -dynamic -S -arch ppc -macosx_version_min 10.4 \
+        -o "$OFILE" -lcrt1.o -undefined dynamic_lookup \
+        -L$LD64DIR "${LD64_FLAGS[@]}" \
+        $LD64DIR/libemutls_w.a $LD64DIR/emutls_stubs.o \
+        "${LINK_OBJS[@]}" "${OBJECTS[@]}" \
+        "${LIBS[@]}" \
+        $LD64DIR/libgcc.a \
+        $LD64DIR/libtiger_runtime.a \
+        -lSystemStubs -lSystem $LD64DIR/libef_ppc.a 2>&1
+fi
+RC=$?
+rm -f "${CLEANUP[@]}"
+exit $RC
