@@ -82,9 +82,9 @@ Cross-compiled on Linux using GCC 7.5.0 with SSH-proxied linking on a real Tiger
 
 ## Cross-Compiler Toolchains
 
-### GCC 15 + ld64 v1.2 -- Standalone, No Mac Needed
+### GCC 15 + ld64 v1.3 -- Standalone, No Mac Needed
 
-**[Download PPC Tiger Cross-Compiler v1.2, GCC 15.2.0 + ld64](https://github.com/danupsher/tiger-ppc-builds/releases/tag/gcc15-xcompiler-1.2)** -- 66 MB
+**[Download PPC Tiger Cross-Compiler v1.3, GCC 15.2.0 + ld64](https://github.com/danupsher/tiger-ppc-builds/releases/tag/gcc15-xcompiler-1.3)** -- 66 MB
 
 ```bash
 tar xf ppc-tiger-gcc15-xcompiler.tar.gz
@@ -99,7 +99,7 @@ ppc-ld64-g++ -std=c++17 -O2 program.cpp -o program
 
 Everything runs locally on x86_64 Linux. No Mac, no SSH. Includes GCC 15 cc1/cc1plus, ld64-97.17, cctools assembler, assembly fixup scripts, runtime libraries, tiger-compat.h, and the Mac OS X 10.4u SDK. Targets `-mcpu=G3` by default -- binaries run on any PPC Mac. **137/137 comprehensive tests passing** (C11, C++17/20/23, exceptions, STL, optimization, real-world patterns). Successfully builds a full Mozilla-based browser from source.
 
-**v1.2 changes**: -force_cpusubtype_ALL on ld64 link step (fixes G3/G4 compatibility), expandlibs .list file support for large project builds, updated tiger-compat.h with more 10.5+ API shims, RTTI fix in fix_exc_ld64.py, all relative paths (no hardcoded paths).
+**v1.3 changes**: G3-safe runtime libraries (libgcc.a, libstdc++.a rebuilt with -mcpu=G3), assembler wrapper runs fix_exc_ld64.py on all input, libstdc++ cross-compiled from GCC 15 source for Tiger.
 
 **Requirements**: x86_64 Linux, Python 3, ~250 MB disk space.
 
