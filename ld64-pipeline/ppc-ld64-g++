@@ -283,7 +283,7 @@ IS_DYLIB=0
 for f in "${LD64_FLAGS[@]}"; do [ "$f" = "-bundle" ] && IS_BUNDLE=1; [ "$f" = "-dylib" ] && IS_DYLIB=1; done
 
 if [ $IS_BUNDLE -eq 1 ]; then
-    $LD64 -syslibroot $SDK/ -search_paths_first -S -arch ppc -macosx_version_min 10.4 \
+    $LD64 -syslibroot $SDK/ -search_paths_first -S -arch ppc -force_cpusubtype_ALL -macosx_version_min 10.4 \
         -read_only_relocs suppress \
         -o "$OFILE" -lbundle1.o -undefined dynamic_lookup \
         -L$LD64DIR "${LD64_FLAGS[@]}" \
@@ -294,14 +294,14 @@ if [ $IS_BUNDLE -eq 1 ]; then
         $LD64DIR/libtiger_runtime.a \
         -lSystem $LD64DIR/libef_ppc.a 2>&1
 elif [ $IS_DYLIB -eq 1 ]; then
-    $LD64 -syslibroot $SDK/ -search_paths_first -S -arch ppc -macosx_version_min 10.4 \
+    $LD64 -syslibroot $SDK/ -search_paths_first -S -arch ppc -force_cpusubtype_ALL -macosx_version_min 10.4 \
         -o "$OFILE" -ldylib1.o -read_only_relocs suppress -undefined dynamic_lookup \
         -L$LD64DIR "${LD64_FLAGS[@]}" \
         "${LINK_OBJS[@]}" "${OBJECTS[@]}" \
         "${LIBS[@]}" \
         $LD64DIR/libemutls_w.a $LD64DIR/libstdc++.a $LD64DIR/libgcc.a $LD64DIR/libtiger_runtime.a $LD64DIR/libef_ppc.a -lSystem 2>&1
 else
-    $LD64 -syslibroot $SDK/ -search_paths_first -dynamic -S -arch ppc -macosx_version_min 10.4 \
+    $LD64 -syslibroot $SDK/ -search_paths_first -dynamic -S -arch ppc -force_cpusubtype_ALL -macosx_version_min 10.4 \
         -o "$OFILE" -lcrt1.o -undefined dynamic_lookup \
         -L$LD64DIR "${LD64_FLAGS[@]}" \
         $LD64DIR/libemutls_w.a \
